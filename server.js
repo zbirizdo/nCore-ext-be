@@ -1,16 +1,21 @@
 //  OpenShift sample Node application
-var express = require('express'),
-    app     = express(),
-    morgan  = require('morgan');
+var express     = require('express'),
+    app         = express(),
+    bodyParser  = require('body-parser'),
+    morgan      = require('morgan'),
+    ObjectID    = require('mongodb').ObjectID;
+
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
     
-Object.assign=require('object-assign')
+Object.assign=require('object-assign');
 
 app.engine('html', require('ejs').renderFile);
-app.use(morgan('combined'))
+app.use(morgan('combined'));
 
 var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
     ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
+    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL || 'mongodb://localhost:27017/sampledb',
     mongoURLLabel = "";
 
 if (mongoURL == null) {
@@ -107,6 +112,57 @@ app.get('/pagecount', function (req, res) {
   } else {
     res.send('{ pageCount: -1 }');
   }
+});
+
+app.post('/favorites', function(req, res) {
+    if (!db) return res.send('DB init error');
+
+    var isOne = !Array.isArray(req.body);
+    db.collection('favorites')[isOne ? 'insertOne' : 'insertMany'](req.body, function (err, result) {
+        if(err) return res.send('insert error: ' + err);
+        res.send(isOne ? result.ops[0] : result.ops);
+    });
+});
+
+app.get('/favorites', function (req, res) {
+    if (!db) return res.send('DB init error');
+
+    db.collection('favorites').find({}).toArray(function(err, result){
+        if(err) return res.send('find error: ' + err);
+        res.send(result);
+    });
+});
+
+app.get('/favorites/:favoriteId', function(req, res) {
+    if (!db) return res.send('DB init error');
+
+    db.collection('favorites').find(ObjectID(req.params.favoriteId)).next(function(err, result){
+        if(err) return res.send('find error: ' + err);
+        res.send(result);
+    });
+});
+
+app.put('/favorites/:favoriteId', function(req, res) {
+    if (!db) return res.send('DB init error');
+
+    delete req.body._id;
+    db.collection('favorites').updateOne({_id: ObjectID(req.params.favoriteId)}, req.body, { upsert: true }, function(err){
+        if(err) return res.send('updateOne error: ' + err);
+        db.collection('favorites').find(ObjectID(req.params.favoriteId)).next(function(err, result){
+            if(err) return res.send('find error: ' + err);
+            res.send(result);
+        });
+    });
+});
+
+app.delete('/favorites/:favoriteId', function(req, res) {
+    if (!db) return res.send('DB init error');
+
+    db.collection('favorites').removeOne({_id: ObjectID(req.params.favoriteId)}, function(err, result){
+        if(err) return res.send('updateOne error: ' + err);
+        console.log('result', result);
+        res.send({result: 'OK'});
+    });
 });
 
 // error handling
