@@ -56,8 +56,8 @@ if (mongoURL == null) {
 }
 
 console.log('mongoURL', mongoURL);
-console.log('process.env.DEV_MODE', process.env.DEV_MODE);
-if(process.env.DEV_MODE) {
+console.log('process.env.DEV_MODE', process.env.DEV_MODE, typeof process.env.DEV_MODE);
+if(!mongoURL && !!process.env.DEV_MODE === true) {
     console.log('setting dev url');
     mongoURL = 'mongodb://localhost:27017/sampledb';
     console.log('mongoURL', mongoURL);
