@@ -13,14 +13,10 @@ Object.assign=require('object-assign');
 app.engine('html', require('ejs').renderFile);
 app.use(morgan('combined'));
 
-console.log('process.env.DEV_MODE', process.env.DEV_MODE);
-
 var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
     ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL || (process.env.DEV_MODE ? 'mongodb://localhost:27017/sampledb' : undefined),
+    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
     mongoURLLabel = "";
-
-console.log('mongoURL', mongoURL);
 
 if (mongoURL == null) {
   var mongoHost, mongoPort, mongoDatabase, mongoPassword, mongoUser;
@@ -58,6 +54,15 @@ if (mongoURL == null) {
     mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
   }
 }
+
+console.log('mongoURL', mongoURL);
+console.log('process.env.DEV_MODE', process.env.DEV_MODE);
+if(process.env.DEV_MODE) {
+    console.log('setting dev url');
+    mongoURL = 'mongodb://localhost:27017/sampledb';
+    console.log('mongoURL', mongoURL);
+}
+
 var db = null,
     dbDetails = new Object();
 
