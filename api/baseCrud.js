@@ -42,6 +42,22 @@ module.exports = function(name, db) {
             });
         });
     }
+
+    function updateOrCreateMany(req, res) {
+        if (!db) return res.send('DB init error');
+
+        db.collection(name).bulkWrite(req.body.map(function(res) {
+            var id = res._id;
+            delete res._id;
+            return {
+                updateOne: { filter: { _id: ObjectID(id) }, update: res, upsert: true }
+            };
+        }), function (err, result) {
+            if(err) return res.send('bulkWrite error: ' + err);
+            res.send({result: 'OK'});
+        });
+
+    }
     
     function deleteOne(req, res) {
         if (!db) return res.send('DB init error');
@@ -60,6 +76,10 @@ module.exports = function(name, db) {
         method: 'get',
         path: '/' + name,
         controller: readAll
+    }, {
+        method: 'put',
+        path: '/' + name,
+        controller: updateOrCreateMany
     }, {
         method: 'get',
         path: '/' + name + '/:resId',
