@@ -1,8 +1,8 @@
 ObjectID = require('mongodb').ObjectID;
 
-var token = '08841av2mg2VHUYE5APIpHik38KatgKX9wTNmyWXy5F67UUoGaN9xq7wpdqIbPdw';
-
 module.exports = function(name, db) {
+
+    var token = '08841av2mg2VHUYE5APIpHik38KatgKX9wTNmyWXy5F67UUoGaN9xq7wpdqIbPdw';
 
     function createOneOrMay(req, res) {
         if (req.headers.authorization !== token) return res.status(500).send('Auth error');
@@ -59,7 +59,7 @@ module.exports = function(name, db) {
             return {
                 updateOne: { filter: { _id: ObjectID(id) }, update: res, upsert: true }
             };
-        }), function (err, result) {
+        }), function (err) {
             if(err) return res.status(500).send('bulkWrite error: ' + err);
             res.send({result: 'OK'});
         });
@@ -76,29 +76,40 @@ module.exports = function(name, db) {
         });
     }
     
-    return [{
-        method: 'post',
-        path: '/' + name,
-        controller: createOneOrMay
-    }, {
-        method: 'get',
-        path: '/' + name,
-        controller: readAll
-    }, {
-        method: 'put',
-        path: '/' + name,
-        controller: updateOrCreateMany
-    }, {
-        method: 'get',
-        path: '/' + name + '/:resId',
-        controller: readOne
-    }, {
-        method: 'put',
-        path: '/' + name + '/:resId',
-        controller: updateOne
-    }, {
-        method: 'delete',
-        path: '/' + name + '/:resId',
-        controller: deleteOne
-    }];
+    return {
+        token: token,
+        name: name,
+        routes: {
+            createOneOrMay: {
+                method: 'post',
+                path: '/' + name,
+                controller: createOneOrMay
+            },
+            readAll: {
+                method: 'get',
+                path: '/' + name,
+                controller: readAll
+            },
+            updateOrCreateMany: {
+                method: 'put',
+                path: '/' + name,
+                controller: updateOrCreateMany
+            },
+            readOne: {
+                method: 'get',
+                path: '/' + name + '/:resId',
+                controller: readOne
+            },
+            updateOne: {
+                method: 'put',
+                path: '/' + name + '/:resId',
+                controller: updateOne
+            },
+            deleteOne: {
+                method: 'delete',
+                path: '/' + name + '/:resId',
+                controller: deleteOne
+            }
+        }
+    };
 };
