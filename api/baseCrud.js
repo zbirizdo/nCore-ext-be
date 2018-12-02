@@ -11,6 +11,7 @@ module.exports = function(name, db) {
         var isOne = !Array.isArray(req.body);
         db.collection(name)[isOne ? 'insertOne' : 'insertMany'](req.body, function (err, result) {
             if(err) return res.send('insert error: ' + err);
+            setLastUpdate();
             res.send(isOne ? result.ops[0] : result.ops);
         });
     }
@@ -44,6 +45,7 @@ module.exports = function(name, db) {
             if(err) return res.send('updateOne error: ' + err);
             db.collection(name).find(ObjectID(req.params.resId)).next(function(err, result){
                 if(err) return res.status(500).send('find error: ' + err);
+                setLastUpdate();
                 res.send(result);
             });
         });
@@ -61,6 +63,7 @@ module.exports = function(name, db) {
             };
         }), function (err) {
             if(err) return res.status(500).send('bulkWrite error: ' + err);
+            setLastUpdate();
             res.send({result: 'OK'});
         });
 
@@ -75,10 +78,27 @@ module.exports = function(name, db) {
             res.send({result: 'OK'});
         });
     }
+
+    function lastUpdate(req, res) {
+        if (req.headers.authorization !== token) return res.status(500).send('Auth error');
+        if (!db) return res.status(500).send('DB init error');
+
+        db.collection('lastUpdates').find({name: name}).next(function(err, result){
+            if(err) return res.status(500).send('find error: ' + err);
+            res.send(result);
+        });
+    }
+
+    function setLastUpdate() {
+        db.collection('lastUpdates').updateOne({name: name}, {name: name, date: new Date()}, { upsert: true }, function(err){
+            if(err) console.log('Error setting last update on ' + name, err);
+        });
+    }
     
     return {
         token: token,
         name: name,
+        setLastUpdate: setLastUpdate,
         routes: {
             createOneOrMay: {
                 method: 'post',
@@ -109,6 +129,11 @@ module.exports = function(name, db) {
                 method: 'delete',
                 path: '/' + name + '/:resId',
                 controller: deleteOne
+            },
+            lastUpdate: {
+                method: 'get',
+                path: '/lastUpdate/' + name,
+                controller: lastUpdate
             }
         }
     };

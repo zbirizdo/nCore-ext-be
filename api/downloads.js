@@ -23,6 +23,7 @@ module.exports = function(app, db) {
         }), function (err) {
             if(err) return res.status(500).send('bulkWrite error: ' + err);
 
+            crud.setLastUpdate();
             db.collection(crud.name).find({}).toArray(function(err, result){
                 if(err) return res.status(500).send('find error: ' + err);
                 res.send(result);
