@@ -32,14 +32,17 @@ app.get('/', function (req, res) {
 });
 
 // error handling
-app.use(function(err, req, res){
+app.use(function(err, req, res, next){
     console.error(err.stack);
     res.status(500).send('Something bad happened!');
 });
 
 initDb(function(err){
     if(err) return console.log('Error connecting to Mongo. Message:\n'+err);
+
+    require('./api/favorites')(app, db);
+    require('./api/downloads')(app, db);
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Listening on ${ PORT }`))
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
