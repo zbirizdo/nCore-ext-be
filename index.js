@@ -20,5 +20,5 @@ app.use(function(err, req, res, next){
     res.status(500).send('Something bad happened!');
 });
 
-app.listen(5000, 'localhost');
-console.log('Server running on http://%s:%s', 'localhost', 5000);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Listening on ${ PORT }`))
