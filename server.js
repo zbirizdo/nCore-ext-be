@@ -1,9 +1,11 @@
 //  OpenShift sample Node application
 var congig          = require('./config')(),
     app             = require('express')(),
+    cors            = require('cors'),
     bodyParser      = require('body-parser'),
     morgan          = require('morgan');
 
+app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
